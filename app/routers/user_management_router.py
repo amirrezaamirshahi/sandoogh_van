@@ -1,10 +1,17 @@
-from fastapi import APIRouter
+# routers/user_management_router.py
+from fastapi import APIRouter, HTTPException, Depends
 from app.models.models import UserResponse
 from app.database.database import get_user_collection
+from app.routers.user_router import get_current_user  # برای دسترسی به کاربر فعلی
 
 router = APIRouter(prefix="/user-management", tags=["user-management"])
 
-@router.get("/", response_model=list[UserResponse])
+def admin_only(current_user: dict = Depends(get_current_user)):
+    if current_user.user_type != 'ادمین':
+        raise HTTPException(status_code=403, detail="Access forbidden: Admins only")
+    return current_user
+
+@router.get("/", response_model=list[UserResponse], dependencies=[Depends(admin_only)])
 def get_all_users():
     users = list(get_user_collection().find({}, {
         "first_name": 1,
