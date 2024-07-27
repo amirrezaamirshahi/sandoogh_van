@@ -1,4 +1,5 @@
-from fastapi import APIRouter, HTTPException, Depends
+from datetime import timedelta
+from fastapi import APIRouter, HTTPException, Depends, Form
 from fastapi.security import OAuth2PasswordRequestForm
 from pymongo.errors import DuplicateKeyError
 from app.models.models import UserCreate, User
@@ -28,9 +29,12 @@ def register(user: UserCreate):
     return User(**user_data)
 
 @router.post("/token")
-def login(form_data: OAuth2PasswordRequestForm = Depends()):
+def login(form_data: OAuth2PasswordRequestForm = Depends(), remember_me: bool = Form(False)):
     user = get_user_collection().find_one({"username": form_data.username})
     if not user or not verify_password(form_data.password, user["hashed_password"]):
         raise HTTPException(status_code=401, detail="Incorrect username or password")
-    access_token = create_access_token(data={"sub": user["username"]})
+    
+    # Determine the expiration time for the token
+    access_token_expires = timedelta(days=7) if remember_me else timedelta(minutes=30)
+    access_token = create_access_token(data={"sub": user["username"]}, expires_delta=access_token_expires)
     return {"access_token": access_token, "token_type": "bearer"}
