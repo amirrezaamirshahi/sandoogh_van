@@ -12,6 +12,8 @@ class UserBase(BaseModel):
     category: Literal['مرکز کنترل', 'مهراباد', 'امام خمینی']
     description: Optional[str] = None
     created_at: Optional[datetime] = None  # فیلد تاریخ ایجاد کاربر
+    status: Literal['فعال', 'غیرفعال', 'سطل بازیافت'] = 'فعال'  # فیلد وضعیت کاربر
+    membership_code: Optional[str] = None  # فیلد کد عضویت
 
     @validator('username')
     def validate_username(cls, v):
@@ -38,3 +40,12 @@ class UserCreate(UserBase):
 class User(UserBase):
     class Config:
         from_attributes = True
+        
+class UserResponse(BaseModel):
+    first_name: str
+    last_name: str
+    membership_code: str
+    username: str
+    user_type: Literal['کاربرعادی', 'کاربر صندوق', 'مدیران', 'ادمین']
+    created_at: datetime
+    status: Literal['فعال', 'غیرفعال', 'سطل بازیافت']

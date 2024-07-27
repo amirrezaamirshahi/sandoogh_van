@@ -1,10 +1,11 @@
-from datetime import datetime, timedelta  # اضافه کردن timedelta به ایمپورت‌ها
+from datetime import datetime, timedelta
 from fastapi import APIRouter, HTTPException, Depends, Form
 from fastapi.security import OAuth2PasswordRequestForm
 from pymongo.errors import DuplicateKeyError
 from app.models.models import UserCreate, User
 from app.database.database import get_user_collection
-from app.auth.auth import get_password_hash, verify_password, create_access_token, ACCESS_TOKEN_EXPIRE_MINUTES
+from app.auth.auth import get_password_hash, verify_password, create_access_token, ACCESS_TOKEN_EXPIRE_MINUTES  # اضافه کردن ایمپورت ثابت
+import uuid  # برای تولید کد عضویت یونیک
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -18,6 +19,7 @@ def register(user: UserCreate):
     user_data.pop("confirm_password")
     user_data["hashed_password"] = hashed_password
     user_data["created_at"] = datetime.utcnow()  # اضافه کردن زمان فعلی به عنوان تاریخ ایجاد
+    user_data["membership_code"] = str(uuid.uuid4())  # تولید کد عضویت یونیک
 
     # Check for unique username
     if get_user_collection().find_one({"username": user.username}):
@@ -43,6 +45,8 @@ def login(form_data: OAuth2PasswordRequestForm = Depends(), remember_me: bool = 
     user_data = {
         "username": user["username"],
         "email": user["email"],
-        "created_at": user["created_at"]  # اضافه کردن تاریخ ایجاد به داده‌های کاربر
+        "created_at": user["created_at"],  # اضافه کردن تاریخ ایجاد به داده‌های کاربر
+        "status": user["status"],  # اضافه کردن وضعیت کاربر
+        "membership_code": user["membership_code"]  # اضافه کردن کد عضویت کاربر
     }
     return {"access_token": access_token, "token_type": "bearer", "user": user_data}
