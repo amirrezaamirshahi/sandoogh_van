@@ -4,6 +4,7 @@ from datetime import datetime, timedelta
 from app.config.config import settings
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+print(pwd_context)
 
 SECRET_KEY = settings.secret_key
 ALGORITHM = "HS256"
