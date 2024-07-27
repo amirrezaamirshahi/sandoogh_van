@@ -1,6 +1,7 @@
 from pydantic import BaseModel, EmailStr, Field, validator
 from typing import Literal, Optional
 import re
+from datetime import datetime
 
 class UserBase(BaseModel):
     username: str = Field(..., min_length=3, max_length=20, pattern=r'^[a-zA-Z0-9_.-]+$', description="Username must be unique and contain only letters, numbers, and certain special characters.")
@@ -10,6 +11,7 @@ class UserBase(BaseModel):
     user_type: Literal['کاربرعادی', 'کاربر صندوق', 'مدیران', 'ادمین']
     category: Literal['مرکز کنترل', 'مهراباد', 'امام خمینی']
     description: Optional[str] = None
+    created_at: Optional[datetime] = None  # فیلد تاریخ ایجاد کاربر
 
     @validator('username')
     def validate_username(cls, v):

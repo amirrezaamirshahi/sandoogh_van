@@ -1,10 +1,10 @@
-from datetime import timedelta
+from datetime import datetime, timedelta  # اضافه کردن timedelta به ایمپورت‌ها
 from fastapi import APIRouter, HTTPException, Depends, Form
 from fastapi.security import OAuth2PasswordRequestForm
 from pymongo.errors import DuplicateKeyError
 from app.models.models import UserCreate, User
 from app.database.database import get_user_collection
-from app.auth.auth import get_password_hash, verify_password, create_access_token
+from app.auth.auth import get_password_hash, verify_password, create_access_token, ACCESS_TOKEN_EXPIRE_MINUTES
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -17,6 +17,7 @@ def register(user: UserCreate):
     user_data.pop("password")
     user_data.pop("confirm_password")
     user_data["hashed_password"] = hashed_password
+    user_data["created_at"] = datetime.utcnow()  # اضافه کردن زمان فعلی به عنوان تاریخ ایجاد
 
     # Check for unique username
     if get_user_collection().find_one({"username": user.username}):
@@ -33,8 +34,15 @@ def login(form_data: OAuth2PasswordRequestForm = Depends(), remember_me: bool = 
     user = get_user_collection().find_one({"username": form_data.username})
     if not user or not verify_password(form_data.password, user["hashed_password"]):
         raise HTTPException(status_code=401, detail="Incorrect username or password")
-    
-    # Determine the expiration time for the token
-    access_token_expires = timedelta(days=7) if remember_me else timedelta(minutes=30)
-    access_token = create_access_token(data={"sub": user["username"]}, expires_delta=access_token_expires)
-    return {"access_token": access_token, "token_type": "bearer"}
+
+    token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+    if remember_me:
+        token_expires = timedelta(days=30)
+
+    access_token = create_access_token(data={"sub": user["username"]}, expires_delta=token_expires)
+    user_data = {
+        "username": user["username"],
+        "email": user["email"],
+        "created_at": user["created_at"]  # اضافه کردن تاریخ ایجاد به داده‌های کاربر
+    }
+    return {"access_token": access_token, "token_type": "bearer", "user": user_data}
