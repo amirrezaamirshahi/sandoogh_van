@@ -1,3 +1,4 @@
+# app/database/database.py
 from pymongo import MongoClient
 from app.config.config import settings
 
@@ -11,3 +12,8 @@ def get_user_collection():
     user_collection.delete_many({"username": None})
     user_collection.create_index("username", unique=True)
     return user_collection
+
+def get_news_collection():
+    """Get the news collection from the database."""
+    news_collection = db.news
+    return news_collection

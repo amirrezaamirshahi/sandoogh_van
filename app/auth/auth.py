@@ -1,3 +1,4 @@
+# app/auth/auth.py
 from datetime import datetime, timedelta
 from passlib.context import CryptContext
 from jose import JWTError, jwt

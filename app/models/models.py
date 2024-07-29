@@ -1,3 +1,4 @@
+# app/models/models.py
 from pydantic import BaseModel, EmailStr, Field, validator
 from typing import Literal, Optional
 import re
@@ -49,3 +50,15 @@ class UserResponse(BaseModel):
     user_type: Literal['کاربرعادی', 'کاربر صندوق', 'مدیران', 'ادمین']
     created_at: datetime
     status: Literal['فعال', 'غیرفعال', 'سطل بازیافت']
+
+class News(BaseModel):
+    publish_date: datetime = Field(..., description="تاریخ انتشار")
+    archive_date: datetime = Field(..., description="تاریخ ارشیو")
+    access_level: Literal['عمومی', 'عدم مشاهده به کاربر نهایی', 'کاربران صندوق', 'کاربران عادی'] = Field(..., description="سطح دسترسی")
+    title: str = Field(..., description="عنوان")
+    short_description: Optional[str] = Field(None, description="توضیحات مختصر")
+    content: str = Field(..., description="متن")
+    created_by: str = Field(..., description="ایجاد کننده")
+
+    class Config:
+        from_attributes = True

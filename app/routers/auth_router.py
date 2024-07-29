@@ -1,3 +1,4 @@
+# app/routers/auth_router.py
 from datetime import datetime, timedelta
 from fastapi import APIRouter, HTTPException, Depends, Form
 from fastapi.security import OAuth2PasswordRequestForm
@@ -9,7 +10,6 @@ from app.auth.auth import get_password_hash, verify_password, create_access_toke
 import uuid  # برای تولید کد عضویت یونیک
 
 router = APIRouter(prefix="/auth", tags=["auth"])
-
 
 @router.post("/register", response_model=User)
 def register(user: UserCreate):
@@ -34,7 +34,6 @@ def register(user: UserCreate):
     except DuplicateKeyError:
         raise HTTPException(status_code=400, detail="Email already registered")
     return User(**user_data)
-
 
 @router.post("/token")
 def login(form_data: OAuth2PasswordRequestForm = Depends(), remember_me: bool = Form(False)):
