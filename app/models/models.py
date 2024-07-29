@@ -59,6 +59,7 @@ class News(BaseModel):
     short_description: Optional[str] = Field(None, description="توضیحات مختصر")
     content: str = Field(..., description="متن")
     created_by: str = Field(..., description="ایجاد کننده")
+    status: Literal['منتشر شده', 'منتشر نشده'] = Field(..., description="وضعیت خبر")
 
     class Config:
         from_attributes = True
