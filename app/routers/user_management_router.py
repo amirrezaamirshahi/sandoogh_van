@@ -3,7 +3,7 @@ from fastapi import APIRouter, HTTPException, Depends, Query
 from app.models.models import UserResponse,GroupCreate, Group
 from app.database.database import get_user_collection,get_group_collection
 from app.routers.user_router import get_current_user
-from typing import Optional
+from typing import Optional,List
 from datetime import datetime
 from app.models.models import UserCreate, User
 from app.auth.auth import get_password_hash, verify_password, create_access_token, ACCESS_TOKEN_EXPIRE_MINUTES
@@ -128,3 +128,19 @@ def register(user: UserCreate):
     except DuplicateKeyError:
         raise HTTPException(status_code=400, detail="Email already registered")
     return User(**user_data)
+
+@router.get("/categories", response_model=List[dict], dependencies=[Depends(admin_only)])
+def get_user_groups():
+    groups = list(get_group_collection().find({}, {
+        "name": 1,
+        "type": 1,
+        "description": 1,
+        "created_at": 1,
+        "members": 1
+    }))
+    for group in groups:
+        group['_id'] = str(group['_id'])
+        for i, member in enumerate(group['members']):
+            user = get_user_collection().find_one({"username": member}, {"_id": 0, "username": 1})
+            group['members'][i] = user
+    return groups
