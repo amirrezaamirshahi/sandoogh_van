@@ -84,3 +84,19 @@ def add_group(group: GroupCreate):
 
     get_group_collection().insert_one(group_data)
     return Group(**group_data)
+
+
+@router.get("/groups", response_model=list[Group], dependencies=[Depends(admin_only)])
+def get_all_groups():
+    groups = list(get_group_collection().find({}, {
+        "group_name": 1,
+        "group_type": 1,
+        "description": 1,
+        "created_at": 1,
+        "members": 1
+    }))
+
+    for group in groups:
+        group['_id'] = str(group['_id'])
+
+    return groups
