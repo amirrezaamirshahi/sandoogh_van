@@ -5,6 +5,10 @@ from app.database.database import get_user_collection,get_group_collection
 from app.routers.user_router import get_current_user
 from typing import Optional
 from datetime import datetime
+from app.models.models import UserCreate, User
+from app.auth.auth import get_password_hash, verify_password, create_access_token, ACCESS_TOKEN_EXPIRE_MINUTES
+import uuid  # برای تولید کد عضویت یونیک
+from pymongo.errors import DuplicateKeyError
 
 router = APIRouter(prefix="/user-management", tags=["user-management"])
 
@@ -100,3 +104,27 @@ def get_all_groups():
         group['_id'] = str(group['_id'])
 
     return groups
+
+@router.post("/add-user", response_model=User)
+def register(user: UserCreate):
+    if user.password != user.confirm_password:
+        raise HTTPException(status_code=400, detail="Passwords do not match")
+    hashed_password = get_password_hash(user.password)
+    user_data = user.dict()
+    user_data.pop("password")
+    user_data.pop("confirm_password")
+    user_data["hashed_password"] = hashed_password
+    # اضافه کردن زمان فعلی به عنوان تاریخ ایجاد
+    user_data["created_at"] = datetime.utcnow()
+    user_data["membership_code"] = str(uuid.uuid4())  # تولید کد عضویت یونیک
+
+    # Check for unique username
+    if get_user_collection().find_one({"username": user.username}):
+        raise HTTPException(
+            status_code=400, detail="Username already registered")
+
+    try:
+        get_user_collection().insert_one(user_data)
+    except DuplicateKeyError:
+        raise HTTPException(status_code=400, detail="Email already registered")
+    return User(**user_data)
