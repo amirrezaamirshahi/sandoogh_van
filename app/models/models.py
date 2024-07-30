@@ -1,6 +1,6 @@
 # app/models/models.py
 from pydantic import BaseModel, EmailStr, Field, validator
-from typing import Literal, Optional
+from typing import Literal, Optional,List
 import re
 from datetime import datetime
 
@@ -61,5 +61,25 @@ class News(BaseModel):
     created_by: str = Field(..., description="ایجاد کننده")
     status: Literal['منتشر شده', 'منتشر نشده'] = Field(..., description="وضعیت خبر")
 
+    class Config:
+        from_attributes = True
+
+class GroupBase(BaseModel):
+    group_name: str = Field(..., description="نام گروه")
+    group_type: Literal['گروه ادمین', 'گروه مدیران'] = Field(..., description="نوع گروه")
+    description: Optional[str] = Field(None, description="توضیحات")
+    created_at: Optional[datetime] = Field(None, description="تاریخ ایجاد")
+    members: List[str] = Field(..., description="اعضا")
+
+    @validator('members', each_item=True)
+    def validate_member_username(cls, v):
+        if re.match(r'^[a-zA-Z0-9_.-]+$', v) is None:
+            raise ValueError('Username must contain only letters, numbers, and certain special characters.')
+        return v
+
+class GroupCreate(GroupBase):
+    pass
+
+class Group(GroupBase):
     class Config:
         from_attributes = True

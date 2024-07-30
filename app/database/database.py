@@ -13,8 +13,12 @@ def get_user_collection():
 
 def get_news_collection():
     news_collection = db.news
-    # اندکس گذاری برای بهبود کارایی جستجو
     news_collection.create_index("title")
     news_collection.create_index("access_level")
     news_collection.create_index("status")
     return news_collection
+
+def get_group_collection():
+    group_collection = db.groups
+    group_collection.create_index("group_name", unique=True)
+    return group_collection

@@ -1,9 +1,10 @@
 # routers/user_management_router.py
 from fastapi import APIRouter, HTTPException, Depends, Query
-from app.models.models import UserResponse
-from app.database.database import get_user_collection
+from app.models.models import UserResponse,GroupCreate, Group
+from app.database.database import get_user_collection,get_group_collection
 from app.routers.user_router import get_current_user
 from typing import Optional
+from datetime import datetime
 
 router = APIRouter(prefix="/user-management", tags=["user-management"])
 
@@ -67,3 +68,19 @@ def search_users(
         user['_id'] = str(user['_id'])
 
     return users
+
+@router.post("/groups/add-group", response_model=Group, dependencies=[Depends(admin_only)])
+def add_group(group: GroupCreate):
+    group_data = group.dict()
+    group_data["created_at"] = datetime.utcnow()
+
+    existing_group = get_group_collection().find_one({"group_name": group.group_name})
+    if existing_group:
+        raise HTTPException(status_code=400, detail="Group name already exists")
+
+    valid_usernames = [user["username"] for user in get_user_collection().find({"username": {"$in": group.members}}, {"username": 1})]
+    if len(valid_usernames) != len(group.members):
+        raise HTTPException(status_code=400, detail="One or more usernames are invalid")
+
+    get_group_collection().insert_one(group_data)
+    return Group(**group_data)
