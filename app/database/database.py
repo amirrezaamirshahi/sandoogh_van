@@ -6,14 +6,15 @@ client = MongoClient(settings.mongo_uri)
 db = client.user_database
 
 def get_user_collection():
-    """Get the user collection from the database."""
     user_collection = db.users
-    # Remove documents with null username
     user_collection.delete_many({"username": None})
     user_collection.create_index("username", unique=True)
     return user_collection
 
 def get_news_collection():
-    """Get the news collection from the database."""
     news_collection = db.news
+    # اندکس گذاری برای بهبود کارایی جستجو
+    news_collection.create_index("title")
+    news_collection.create_index("access_level")
+    news_collection.create_index("status")
     return news_collection
